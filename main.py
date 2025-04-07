@@ -1,3 +1,4 @@
+from email.policy import default
 from symtable import Function
 from tkinter import *
 import tkinter as tk
@@ -7,20 +8,28 @@ class Create:
     def __init__(self):
         x = self
         self.root = Tk()
-        self.root.geometry("500x200")
+        self.root.title("Создание")
+
+        icon = PhotoImage(file="img/menu_book_37dp_000000_FILL0_wght400_GRAD0_opsz40.png")
+        self.root.iconphoto(False,icon)
+        self.root.geometry("500x300")
+        lbl = ttk.Label(text="Введите название новой книги:")
+        self.edit_name = ttk.Entry()
         lbl1 = ttk.Label(text="Введите кол-во столбцов:")
         self.edit_col = ttk.Entry()
         lbl2 = ttk.Label(text="Введите кол-во строк:")
         self.edit_raws = ttk.Entry()
         btn_create = ttk.Button(text="Создать",command=lambda self=x:Create.create_table(self))
-        lbl1.place(x="10", y="10")
-        self.edit_col.place(x="200", y="10")
-        lbl2.place(x="10", y="40")
-        self.edit_raws.place(x="200", y="40")
+        lbl.place(x="10", y="10")
+        self.edit_name.place(x="200", y="10")
+        lbl1.place(x="10", y="40")
+        self.edit_col.place(x="200", y="40")
+        lbl2.place(x="10", y="70")
+        self.edit_raws.place(x="200", y="70")
         btn_create.pack(anchor="s", side='bottom', pady="20")
         self.root.mainloop()
     def create_table(self):
-        new_table = Book(self.edit_raws.get(),self.edit_col.get())
+        new_table = Book(self.edit_raws.get(),self.edit_col.get(),self.edit_name.get())
         self.root.destroy()
         del self
 
@@ -28,10 +37,13 @@ class Create:
 
 
 class Book(Tk):
-    def __init__(self,rows,col):
+    def __init__(self,rows,col,name):
         super().__init__()
 
         self.geometry("500x500")
+        self.title(name)
+        icon1 = PhotoImage(master=self,file="img/book_37dp_000000_FILL0_wght400_GRAD0_opsz40.png")
+        self.iconphoto(False, icon1)
 
         frame_table = ttk.Frame(self,borderwidth=3)
         table_menu = Menu(self)
