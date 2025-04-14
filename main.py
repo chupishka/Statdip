@@ -3,6 +3,8 @@ from symtable import Function
 from tkinter import *
 import tkinter as tk
 from tkinter import ttk
+import pandas as pd
+
 
 class Create:
     def __init__(self):
