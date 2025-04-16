@@ -39,65 +39,82 @@ class Create:
 
 
 class Book(Tk):
-    def __init__(self,rows,col,name):
+    def __init__(self, rows, col, name):
         super().__init__()
         self.canv = tk.Canvas(self)
-
         self.geometry("700x700")
         self.title(name)
-
-
+        
+        # Создаем фрейм для скроллбаров и канваса
+        self.main_frame = ttk.Frame(self)
+        self.main_frame.pack(fill="both", expand=True)
+        
+        # Горизонтальная прокрутка
+        self.scrlx = ttk.Scrollbar(self.main_frame, orient="horizontal", command=self.canv.xview)
+        # Вертикальная прокрутка
+        self.scrly = ttk.Scrollbar(self.main_frame, orient="vertical", command=self.canv.yview)
+        
+        self.canv.configure(xscrollcommand=self.scrlx.set)
+        self.canv.configure(yscrollcommand=self.scrly.set)
+        
+        # Размещаем канвас и скроллбары
         self.canv.pack(side="left", fill="both", expand=True)
-        
-        
-        icon1 = PhotoImage(master=self,file="img/book_37dp_000000_FILL0_wght400_GRAD0_opsz40.png")
+        self.scrly.pack(side="right", fill="y")
+        self.scrlx.pack(side="bottom", fill="x")
+
+        icon1 = PhotoImage(master=self, file="img/book_37dp_000000_FILL0_wght400_GRAD0_opsz40.png")
         self.iconphoto(False, icon1)
 
-        frame_table = ttk.Frame(self.canv,borderwidth=3)
-
+        frame_table = ttk.Frame(self.canv, borderwidth=3)
+        self.canv.create_window((0, 0), window=frame_table, anchor="nw")
+        
+        # Привязываем изменение размера фрейма к обновлению области прокрутки
         frame_table.bind("<Configure>", lambda e: self.canv.configure(scrollregion=self.canv.bbox("all")))
-
-        self.canv.create_window((0,0),window=frame_table,anchor="nw")
+        
         table_menu = Menu(self)
         file_menu = Menu(self)
         func_menu = Menu(self)
 
-        
-        func_menu.add_cascade(label="Function1",command= lambda x = self:Book.function1(self))
-        file_menu.add_cascade(label="New book",command= lambda x = self:Book.new_book(self))
+        func_menu.add_cascade(label="Function1", command=lambda x=self: Book.function1(self))
+        file_menu.add_cascade(label="New book", command=lambda x=self: Book.new_book(self))
         file_menu.add_cascade(label="Save book")
 
-        table_menu.add_cascade(label="File",menu=file_menu)
+        table_menu.add_cascade(label="File", menu=file_menu)
         table_menu.add_cascade(label="Edit")
-        table_menu.add_cascade(label="Functions",menu=func_menu)
-        self.config(menu = table_menu)
+        table_menu.add_cascade(label="Functions", menu=func_menu)
+        self.config(menu=table_menu)
+        
         self.columns = []
         self.data = []
         for i in range(int(col)+1):
             dat = []
             for j in range(int(rows)+1):
-                if i==0 and j== 0:
+                if i == 0 and j == 0:
                     continue
-                if j==0:
-                    entry = ttk.Entry(frame_table,text = "Var"+str(i),justify=RIGHT)
-                    entry.insert(0,"Var"+str(i))
-                    entry.grid(row = j,column=i)
+                if j == 0:
+                    entry = ttk.Entry(frame_table, text="Var"+str(i), justify="right")
+                    entry.insert(0, "Var"+str(i))
+                    entry.grid(row=j, column=i, sticky="nsew")
                     dat.append(entry)
-                elif i==0:
-                    lbl = ttk.Label(frame_table,text = str(j),justify=RIGHT)
-                    lbl.grid(row = j,column=i)
+                elif i == 0:
+                    lbl = ttk.Label(frame_table, text=str(j), justify="right")
+                    lbl.grid(row=j, column=i, sticky="nsew")
                 else:
-                    entry = ttk.Entry(frame_table,text=str(i)+str(j),justify=RIGHT)
-                    entry.grid(row = j,column=i)
-
+                    entry = ttk.Entry(frame_table, text=str(i)+str(j), justify="right")
+                    entry.grid(row=j, column=i, sticky="nsew")
                     dat.append(entry)
             if i != 0:
                 self.data.append(dat)
         
+        # Настраиваем растягивание ячеек таблицы
+        # for i in range(int(col)+1):
+        #     frame_table.grid_columnconfigure(i, weight=1)
+        # for j in range(int(rows)+1):
+        #     frame_table.grid_rowconfigure(j, weight=1)
+        
+        # Привязываем колесо мыши для прокрутки
         self.canv.bind_all("<MouseWheel>", lambda e: self.canv.yview_scroll(int(-1*(e.delta/120)), "units"))
         self.canv.bind_all("<Shift-MouseWheel>", lambda e: self.canv.xview_scroll(int(-1*(e.delta/120)), "units"))
-        
-
     def new_book(self):
 
         new_create = Create()
@@ -133,16 +150,10 @@ class Book(Tk):
 
 class Function1(Tk):
     def __init__(self,raw_data):
-        
         super().__init__()
         self.geometry("500x500")
 
-        self.canv = tk.Canvas(self)
-        self.canv.pack(side="left", fill="both", expand=True)
-
-        frame_table = Frame(self.canv)
-        frame_table.bind("<Configure>", lambda e: self.canv.configure(scrollregion=self.canv.bbox("all")))
-        self.canv.create_window((0,0),window=frame_table,anchor="nw")
+        frame_table = Frame(self)
 
 
         for i in range(len(raw_data[0])):
@@ -166,8 +177,7 @@ class Function1(Tk):
 
 
 
-        self.canv.bind_all("<MouseWheel>", lambda e: self.canv.yview_scroll(int(-1*(e.delta/120)), "units"))
-        self.canv.bind_all("<Shift-MouseWheel>", lambda e: self.canv.xview_scroll(int(-1*(e.delta/120)), "units"))
+        frame_table.pack(anchor="nw")
 
 
 
