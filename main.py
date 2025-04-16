@@ -4,7 +4,8 @@ from tkinter import *
 import tkinter as tk
 from tkinter import ttk
 import pandas as pd
-
+import matplotlib as plt
+# awdawdawdwadwa
 
 class Create:
     def __init__(self):
@@ -174,7 +175,7 @@ class Function1(Tk):
 
 
 c = Create()
-
+print
 
 
 
