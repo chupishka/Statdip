@@ -5,7 +5,9 @@ import tkinter as tk
 from tkinter import ttk
 import pandas as pd
 import matplotlib as plt
-# awdawdawdwadwa
+from tkinter import filedialog
+import numpy as np
+
 
 class Create:
     def __init__(self):
@@ -40,7 +42,7 @@ class Create:
 
 
 class Book(Tk):
-    def __init__(self,rows,col,name):
+    def __init__(self,rows,col,name,table = None,upload = False):
         super().__init__()
         self.canv = tk.Canvas(self)
 
@@ -66,7 +68,8 @@ class Book(Tk):
         
         func_menu.add_cascade(label="Function1",command= lambda x = self:Book.function1(self))
         file_menu.add_cascade(label="New book",command= lambda x = self:Book.new_book(self))
-        file_menu.add_cascade(label="Save book")
+        file_menu.add_cascade(label="Save book",command= lambda x = self:Book.excel_save(self))
+        file_menu.add_cascade(label="Download book",command= lambda x = self:Book.excel_open(self))
 
         table_menu.add_cascade(label="File",menu=file_menu)
         table_menu.add_cascade(label="Edit")
@@ -74,30 +77,71 @@ class Book(Tk):
         self.config(menu = table_menu)
         self.columns = []
         self.data = []
-        for i in range(int(col)+1):
-            dat = []
-            for j in range(int(rows)+1):
-                if i==0 and j== 0:
-                    continue
-                if j==0:
-                    entry = ttk.Entry(frame_table,text = "Var"+str(i),justify=RIGHT)
-                    entry.insert(0,"Var"+str(i))
-                    entry.grid(row = j,column=i)
-                    dat.append(entry)
-                elif i==0:
-                    lbl = ttk.Label(frame_table,text = str(j),justify=RIGHT)
-                    lbl.grid(row = j,column=i)
-                else:
-                    entry = ttk.Entry(frame_table,text=str(i)+str(j),justify=RIGHT)
-                    entry.grid(row = j,column=i)
+        if not upload:
+            for i in range(int(col)+1):
+                dat = []
+                for j in range(int(rows)+1):
+                    if i==0 and j== 0:
+                        continue
+                    if j==0:
+                        entry = ttk.Entry(frame_table,text = "Var"+str(i),justify=RIGHT)
+                        entry.insert(0,"Var"+str(i))
+                        entry.grid(row = j,column=i)
+                        dat.append(entry)
+                    elif i==0:
+                        lbl = ttk.Label(frame_table,text = str(j),justify=RIGHT)
+                        lbl.grid(row = j,column=i)
+                    else:
+                        entry = ttk.Entry(frame_table,text=str(i)+str(j),justify=RIGHT)
+                        entry.grid(row = j,column=i)
 
-                    dat.append(entry)
-            if i != 0:
-                self.data.append(dat)
-        
+                        dat.append(entry)
+                if i != 0:
+                    self.data.append(dat)
+        else:
+            dd = np.array(table)
+            vars = table.columns[1:]
+            for i in range(int(col)+1):
+                dat = []
+                for j in range(int(rows)+1):
+                    if i==0 and j== 0:
+                        continue
+                    if j==0:
+                        entry = ttk.Entry(frame_table,text = "Var"+str(i),justify=RIGHT)
+                        entry.insert(0,vars[i-1])
+                        entry.grid(row = j,column=i)
+                        dat.append(entry)
+                    elif i==0:
+                        lbl = ttk.Label(frame_table,text = str(j),justify=RIGHT)
+                        lbl.grid(row = j,column=i)
+                    else:
+                        entry = ttk.Entry(frame_table,text=str(i)+str(j),justify=RIGHT)
+                        entry.insert(0,dd[j-1][i])
+                        entry.grid(row = j,column=i)
+
+                        dat.append(entry)
+                if i != 0:
+                    self.data.append(dat)
         self.canv.bind_all("<MouseWheel>", lambda e: self.canv.yview_scroll(int(-1*(e.delta/120)), "units"))
         self.canv.bind_all("<Shift-MouseWheel>", lambda e: self.canv.xview_scroll(int(-1*(e.delta/120)), "units"))
         
+    def excel_save(self):
+        excel_dict = {}
+
+        for i in self.data:
+
+            col = list(map(lambda x: x.get(),i))
+            excel_dict[col[0]] = col[1:]
+
+        df = pd.DataFrame(excel_dict)
+        filepath = filedialog.asksaveasfilename()
+        df.to_excel(filepath+".xlsx")
+        
+    def excel_open(self):
+        filepath = filedialog.askopenfilename()
+        df = pd.read_excel(filepath) 
+        dd = np.array(df)
+        new_book = Book(len(dd),len(dd[0])-1,"new",df,True)  
 
     def new_book(self):
 
@@ -175,7 +219,7 @@ class Function1(Tk):
 
 
 c = Create()
-print
+
 
 
 
