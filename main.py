@@ -7,6 +7,7 @@ import pandas as pd
 import matplotlib as plt
 from tkinter import filedialog
 import numpy as np
+import math
 
 
 class Create:
@@ -32,7 +33,9 @@ class Create:
         lbl2.place(x="10", y="70")
         self.edit_raws.place(x="200", y="70")
         btn_create.pack(anchor="s", side='bottom', pady="20")
+        
         self.root.mainloop()
+        
     def create_table(self):
         new_table = Book(self.edit_raws.get(),self.edit_col.get(),self.edit_name.get())
         self.root.destroy()
@@ -156,7 +159,7 @@ class Book(Tk):
         for i in self.data:
             col_names.append(i[0].get())
             continue
-        col_names_var = Variable(value = col_names)
+        col_names_var = Variable(frame_select,value = col_names)
         listbox = Listbox(frame_select,listvariable=col_names_var,selectmode=MULTIPLE)
         listbox.pack()
         frame_select.pack()
@@ -179,8 +182,9 @@ class Book(Tk):
 class Function1(Tk):
     def __init__(self,raw_data):
         
+        
         super().__init__()
-        self.geometry("500x500")
+        self.geometry("1000x1000")
 
         self.canv = tk.Canvas(self)
         self.canv.pack(side="left", fill="both", expand=True)
@@ -188,6 +192,70 @@ class Function1(Tk):
         frame_table = Frame(self.canv)
         frame_table.bind("<Configure>", lambda e: self.canv.configure(scrollregion=self.canv.bbox("all")))
         self.canv.create_window((0,0),window=frame_table,anchor="nw")
+
+        summ_mean = 0
+        SSb = 0
+        SSw = 0
+        SSt = 0
+        
+        data = []
+        n_col_list=[]
+        n = 0
+        for i in raw_data:
+            dat = []
+            counter = 0
+            col = 0
+            for j in i:
+                
+                if counter == 0:
+                    counter+=1
+                    continue
+                counter+=1
+                x = int(j.get())
+                if x == 0:
+                    continue
+                col+=1
+                n+=1
+                summ_mean += x
+                dat.append(x)
+            n_col_list.append(col)
+
+            data.append(dat)
+        
+        k = len(data)
+        
+
+        summ_mean = summ_mean/n
+        
+        
+
+        dfb = k-1
+        dfw = n-k
+        dft = n - 1
+
+        x_col_mean_list = []
+        for i in range(len(data)):
+            x_col_mean = 0
+            for j in range(len(data[i])):
+                x_col_mean += data[i][j]/n_col_list[i]
+            SSb += math.pow((x_col_mean - summ_mean),2)*n_col_list[i]
+            x_col_mean_list.append(x_col_mean)
+        
+        for i in range(len(data)):
+
+            for j in range(len(data[i])):
+
+                SSw+=math.pow((data[i][j] - x_col_mean_list[i]),2)
+                SSt+=math.pow((data[i][j] - summ_mean),2)
+
+        MSb = SSb/dfb
+        MSw = SSw/dfw
+        MSt = SSt/dft
+
+
+        F = MSb/MSw
+            
+
 
 
         for i in range(len(raw_data[0])):

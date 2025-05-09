@@ -1,3 +1,11 @@
 test.py
 test1.py
 teams.xlsx
+.idea/misc.xml
+.idea/vcs.xml
+.idea/workspace.xml
+.idea/inspectionProfiles/profiles_settings.xml
+123.xlsx
+.vscode/launch.json
+__pycache__/main.cpython-312.pyc
+__pycache__/Table.cpython-312.pyc
