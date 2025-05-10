@@ -8,6 +8,7 @@ import matplotlib as plt
 from tkinter import filedialog
 import numpy as np
 import math
+import scipy.stats as sc
 
 
 class Create:
@@ -40,6 +41,7 @@ class Create:
         new_table = Book(self.edit_raws.get(),self.edit_col.get(),self.edit_name.get())
         self.root.destroy()
         del self
+        
 
 
 
@@ -47,6 +49,8 @@ class Create:
 class Book(Tk):
     def __init__(self,rows,col,name,table = None,upload = False):
         super().__init__()
+        self.lift()  # Поднять окно поверх других
+        self.focus_force()  # Принудительно дать фокус (может работать не на всех ОС)
         self.canv = tk.Canvas(self)
 
         self.geometry("700x700")
@@ -151,8 +155,14 @@ class Book(Tk):
         new_create = Create()
 
     def function1(self):
+        self.raw_data = []
+        self.raw_indexes = []
+        self.index = 0
         functiontk = Tk()
         functiontk.geometry("500x500")
+
+
+        
 
         frame_select = Frame(functiontk)
         col_names = []
@@ -161,18 +171,54 @@ class Book(Tk):
             continue
         col_names_var = Variable(frame_select,value = col_names)
         listbox = Listbox(frame_select,listvariable=col_names_var,selectmode=MULTIPLE)
+        lbl = ttk.Label(frame_select,text="Выберите параметры")
+        lbl.pack()
         listbox.pack()
-        frame_select.pack()
+        
+
+
         def get_selected():
             indices = listbox.curselection()
-            raw_data = []
+            self.raw_data = []
             for i in indices:
-                raw_data.append(self.data[i])
-            function1 = Function1(raw_data)
-
-
-        but = ttk.Button(functiontk, text="Выполнить", command=get_selected)
+                self.raw_data.append(self.data[i])
+            
+        but = ttk.Button(frame_select, text="Выбрать", command=get_selected)
         but.pack()
+        
+        
+            
+        def func():
+            
+            func1 = Function1(raw_data=self.raw_data,raw_indexes=self.raw_indexes,index=self.index)
+
+        frame_select1 = Frame(functiontk)
+        listbox1 = Listbox(frame_select1,listvariable=col_names_var,selectmode=SINGLE)
+        lbl1 = ttk.Label(frame_select1,text="Выберите cтолбец обозначений")
+        lbl1.pack()
+        listbox1.pack()
+
+        def get_selected1():
+            
+            self.raw_indexes = []
+            indices = listbox1.curselection()
+            for i in indices:
+                self.index = i
+                self.raw_indexes = self.data[i]
+
+        but1 = ttk.Button(frame_select1, text="Выбрать", command=get_selected1)
+        but1.pack()
+        frame_select.grid(row=0,column=0)
+        functiontk.columnconfigure(index = 0,weight=1)
+        functiontk.columnconfigure(index = 1,weight=1)
+        # functiontk.rowconfigure(index=1,weight=1)
+        frame_select1.grid(row=0,column=1)
+
+        but2 = ttk.Button(functiontk, text="Выполнить", command=func)
+        but2.grid(row=1,column=0,columnspan=2,sticky="s")
+
+        
+        
         functiontk.mainloop()
 
 
@@ -180,10 +226,11 @@ class Book(Tk):
 
 
 class Function1(Tk):
-    def __init__(self,raw_data):
+    def __init__(self,raw_data,raw_indexes,index):
         
         
         super().__init__()
+
         self.geometry("1000x1000")
 
         self.canv = tk.Canvas(self)
@@ -193,89 +240,127 @@ class Function1(Tk):
         frame_table.bind("<Configure>", lambda e: self.canv.configure(scrollregion=self.canv.bbox("all")))
         self.canv.create_window((0,0),window=frame_table,anchor="nw")
 
-        summ_mean = 0
-        SSb = 0
-        SSw = 0
-        SSt = 0
+        list1 = []
+        for i in raw_indexes[1:]:
+            list1.append(i.get())
         
-        data = []
-        n_col_list=[]
-        n = 0
-        for i in raw_data:
-            dat = []
-            counter = 0
-            col = 0
-            for j in i:
+        unique = list(set(list1))
+
+        analyse_data = []
+        for cur_col in raw_data:
+            col_data = []
+            for un in unique:
+
+                col_data_col = []
+
+                for i in range(1,len(cur_col)):
+                    # if float(cur_col[i].get()) == float(0):
+                    #     continue
+                    
+
+                    if raw_indexes[i].get() == un:
+                        col_data_col.append(cur_col[i].get())
+                    
+                col_data.append(col_data_col)
+            analyse_data.append(col_data)
+
+        print(analyse_data)
+
+        phisher_analyse = []
+        for data in analyse_data:
+            
+
+            alpha = 0.05
+            summ_mean = 0
+            SSb = 0
+            SSw = 0
+            SSt = 0
+            
+            
+            n_col_list=[]
+            n = 0
+            for i in data:
+
+                n_col = 0
+                for j in i:
+
+                    
+                    
+                    n_col+=1
+                    n+=1
+                    summ_mean+=float(j)
+                n_col_list.append(n_col)
+
+
+
                 
-                if counter == 0:
-                    counter+=1
-                    continue
-                counter+=1
-                x = int(j.get())
-                if x == 0:
-                    continue
-                col+=1
-                n+=1
-                summ_mean += x
-                dat.append(x)
-            n_col_list.append(col)
+            
+            k = len(data)
+            
 
-            data.append(dat)
+            summ_mean = summ_mean/n
+            
+            # ssb = 2.51 dfb = 3 msb = 0.83 f = 0.56 p = 0.67 r кривизны по верт мм
+
+            dfb = k-1
+            dfw = n-k
+            dft = n - 1
+
+            x_col_mean_list = []
+            for i in range(len(data)):
+                x_col_mean = 0
+                for j in range(len(data[i])):
+                    x_col_mean += (float(data[i][j])/n_col_list[i])
+                SSb += math.pow((x_col_mean - summ_mean),2)*n_col_list[i]
+                x_col_mean_list.append(x_col_mean)
+            
+            for i in range(len(data)):
+
+                for j in range(len(data[i])):
+
+                    SSw+=math.pow((float(data[i][j]) - x_col_mean_list[i]),2)
+                    SSt+=math.pow((float(data[i][j]) - summ_mean),2)
+
+            MSb = SSb/dfb
+            MSw = SSw/dfw
+            MSt = SSt/dft
+
+            
+            F = MSb/MSw
+            F_critical = sc.f.ppf(1-alpha,dfb,dfw)
+            P_value = sc.f.sf(F,dfb,dfw)
+
+            phisher = [SSb,SSw,dfb,dfw,MSb,MSw,F,F_critical,P_value]
+
+            phisher_analyse.append(phisher)
+        print(phisher_analyse)
+
+
+
+
         
-        k = len(data)
+
+
         
-
-        summ_mean = summ_mean/n
-        
-        
-
-        dfb = k-1
-        dfw = n-k
-        dft = n - 1
-
-        x_col_mean_list = []
-        for i in range(len(data)):
-            x_col_mean = 0
-            for j in range(len(data[i])):
-                x_col_mean += data[i][j]/n_col_list[i]
-            SSb += math.pow((x_col_mean - summ_mean),2)*n_col_list[i]
-            x_col_mean_list.append(x_col_mean)
-        
-        for i in range(len(data)):
-
-            for j in range(len(data[i])):
-
-                SSw+=math.pow((data[i][j] - x_col_mean_list[i]),2)
-                SSt+=math.pow((data[i][j] - summ_mean),2)
-
-        MSb = SSb/dfb
-        MSw = SSw/dfw
-        MSt = SSt/dft
-
-
-        F = MSb/MSw
             
 
 
-
-        for i in range(len(raw_data[0])):
-            if i != 0:
-                lbl = ttk.Label(frame_table, text=str(i), justify=RIGHT)
-                lbl.grid(row=i, column=0)
+        names = ["SSb","SSw","dfb","dfw","MSb","MSw","F","F-crit","p"]
         for i in range(len(raw_data)):
+            
+            lbl = ttk.Label(frame_table, text=raw_data[i][0].get(), justify=RIGHT)
+            lbl.grid(row=i+1, column=0)
 
-            for j in range(len(raw_data[i])):
+        for i in range(len(names)):
+            
+            lbl = ttk.Label(frame_table, text=names[i], justify=RIGHT)
+            lbl.grid(row=0, column=i+1)
+        for i in range(len(phisher_analyse)):
 
-                if j == 0:
-                    entry = ttk.Entry(frame_table, justify=RIGHT)
-                    entry.insert(0, raw_data[i][j].get())
-                    entry.grid(row=j, column=i+1)
-
-
-                else:
-                    entry = ttk.Entry(frame_table, justify=RIGHT)
-                    entry.insert(0,raw_data[i][j].get())
-                    entry.grid(row=j, column=i+1)
+            for j in range(len(phisher_analyse[i])):
+                entry = ttk.Entry(frame_table, justify=RIGHT)
+                entry.insert(0, str(phisher_analyse[i][j]))
+                entry.grid(row=i+1, column=j+1)
 
 
 
