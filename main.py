@@ -17,7 +17,7 @@ class Create:
         self.root = Tk()
         self.root.title("Создание")
 
-        icon = PhotoImage(file="img/menu_book_37dp_000000_FILL0_wght400_GRAD0_opsz40.png")
+        icon = PhotoImage(master=self.root,file="img/menu_book_37dp_000000_FILL0_wght400_GRAD0_opsz40.png")
         self.root.iconphoto(False,icon)
         self.root.geometry("500x300")
         lbl = ttk.Label(text="Введите название новой книги:")
@@ -73,7 +73,7 @@ class Book(Tk):
         func_menu = Menu(self)
 
         
-        func_menu.add_cascade(label="Function1",command= lambda x = self:Book.function1(self))
+        func_menu.add_cascade(label="Dispersion analyze",command= lambda x = self:Book.function1(self))
         file_menu.add_cascade(label="New book",command= lambda x = self:Book.new_book(self))
         file_menu.add_cascade(label="Save book",command= lambda x = self:Book.excel_save(self))
         file_menu.add_cascade(label="Download book",command= lambda x = self:Book.excel_open(self))
@@ -157,10 +157,10 @@ class Book(Tk):
     def function1(self):
         self.raw_data = []
         self.raw_indexes = []
-        self.index = 0
+        
         functiontk = Tk()
         functiontk.geometry("500x500")
-
+        functiontk.title("Parametres")
 
         
 
@@ -190,10 +190,10 @@ class Book(Tk):
             
         def func():
             
-            func1 = Function1(raw_data=self.raw_data,raw_indexes=self.raw_indexes,index=self.index)
+            func1 = Function1(raw_data=self.raw_data,raw_indexes=self.raw_indexes)
 
         frame_select1 = Frame(functiontk)
-        listbox1 = Listbox(frame_select1,listvariable=col_names_var,selectmode=SINGLE)
+        listbox1 = Listbox(frame_select1,listvariable=col_names_var,selectmode=MULTIPLE)
         lbl1 = ttk.Label(frame_select1,text="Выберите cтолбец обозначений")
         lbl1.pack()
         listbox1.pack()
@@ -203,8 +203,8 @@ class Book(Tk):
             self.raw_indexes = []
             indices = listbox1.curselection()
             for i in indices:
-                self.index = i
-                self.raw_indexes = self.data[i]
+                
+                self.raw_indexes.append(self.data[i])
 
         but1 = ttk.Button(frame_select1, text="Выбрать", command=get_selected1)
         but1.pack()
@@ -226,10 +226,11 @@ class Book(Tk):
 
 
 class Function1(Tk):
-    def __init__(self,raw_data,raw_indexes,index):
+    def __init__(self,raw_data,raw_indexes):
         
         
         super().__init__()
+        self.title("Dispersion analyze")
 
         self.geometry("1000x1000")
 
@@ -240,100 +241,105 @@ class Function1(Tk):
         frame_table.bind("<Configure>", lambda e: self.canv.configure(scrollregion=self.canv.bbox("all")))
         self.canv.create_window((0,0),window=frame_table,anchor="nw")
 
-        list1 = []
-        for i in raw_indexes[1:]:
-            list1.append(i.get())
-        
-        unique = list(set(list1))
 
-        analyse_data = []
-        for cur_col in raw_data:
-            col_data = []
-            for un in unique:
+        phisher_analyse_arr = []
+        for raw_indexes_col in raw_indexes:
 
-                col_data_col = []
-
-                for i in range(1,len(cur_col)):
-                    # if float(cur_col[i].get()) == float(0):
-                    #     continue
-                    
-
-                    if raw_indexes[i].get() == un:
-                        col_data_col.append(cur_col[i].get())
-                    
-                col_data.append(col_data_col)
-            analyse_data.append(col_data)
-
-        print(analyse_data)
-
-        phisher_analyse = []
-        for data in analyse_data:
+            list1 = []
+            for i in raw_indexes_col[1:]:
+                list1.append(i.get())
             
+            unique = list(set(list1))
 
-            alpha = 0.05
-            summ_mean = 0
-            SSb = 0
-            SSw = 0
-            SSt = 0
-            
-            
-            n_col_list=[]
-            n = 0
-            for i in data:
+            analyse_data = []
+            for cur_col in raw_data:
+                col_data = []
+                for un in unique:
 
-                n_col = 0
-                for j in i:
+                    col_data_col = []
+
+                    for i in range(1,len(cur_col)):
+                        # if float(cur_col[i].get()) == float(0):
+                        #     continue
+                        
+
+                        if raw_indexes_col[i].get() == un:
+                            col_data_col.append(cur_col[i].get())
+                        
+                    col_data.append(col_data_col)
+                analyse_data.append(col_data)
+
+            print(analyse_data)
+
+            phisher_analyse = []
+            for data in analyse_data:
+                
+
+                alpha = 0.05
+                summ_mean = 0
+                SSb = 0
+                SSw = 0
+                SSt = 0
+                
+                
+                n_col_list=[]
+                n = 0
+                for i in data:
+
+                    n_col = 0
+                    for j in i:
+
+                        
+                        
+                        n_col+=1
+                        n+=1
+                        summ_mean+=float(j)
+                    n_col_list.append(n_col)
+
+
 
                     
-                    
-                    n_col+=1
-                    n+=1
-                    summ_mean+=float(j)
-                n_col_list.append(n_col)
+                
+                k = len(data)
+                
 
+                summ_mean = summ_mean/n
+                
+                # ssb = 2.51 dfb = 3 msb = 0.83 f = 0.56 p = 0.67 r кривизны по верт мм
 
+                dfb = k-1
+                dfw = n-k
+                dft = n - 1
+
+                x_col_mean_list = []
+                for i in range(len(data)):
+                    x_col_mean = 0
+                    for j in range(len(data[i])):
+                        x_col_mean += (float(data[i][j])/n_col_list[i])
+                    SSb += math.pow((x_col_mean - summ_mean),2)*n_col_list[i]
+                    x_col_mean_list.append(x_col_mean)
+                
+                for i in range(len(data)):
+
+                    for j in range(len(data[i])):
+
+                        SSw+=math.pow((float(data[i][j]) - x_col_mean_list[i]),2)
+                        SSt+=math.pow((float(data[i][j]) - summ_mean),2)
+
+                MSb = SSb/dfb
+                MSw = SSw/dfw
+                MSt = SSt/dft
 
                 
-            
-            k = len(data)
-            
+                F = MSb/MSw
+                F_critical = sc.f.ppf(1-alpha,dfb,dfw)
+                P_value = sc.f.sf(F,dfb,dfw)
 
-            summ_mean = summ_mean/n
-            
-            # ssb = 2.51 dfb = 3 msb = 0.83 f = 0.56 p = 0.67 r кривизны по верт мм
+                phisher = [SSb,SSw,dfb,dfw,MSb,MSw,F,F_critical,P_value]
 
-            dfb = k-1
-            dfw = n-k
-            dft = n - 1
-
-            x_col_mean_list = []
-            for i in range(len(data)):
-                x_col_mean = 0
-                for j in range(len(data[i])):
-                    x_col_mean += (float(data[i][j])/n_col_list[i])
-                SSb += math.pow((x_col_mean - summ_mean),2)*n_col_list[i]
-                x_col_mean_list.append(x_col_mean)
-            
-            for i in range(len(data)):
-
-                for j in range(len(data[i])):
-
-                    SSw+=math.pow((float(data[i][j]) - x_col_mean_list[i]),2)
-                    SSt+=math.pow((float(data[i][j]) - summ_mean),2)
-
-            MSb = SSb/dfb
-            MSw = SSw/dfw
-            MSt = SSt/dft
-
-            
-            F = MSb/MSw
-            F_critical = sc.f.ppf(1-alpha,dfb,dfw)
-            P_value = sc.f.sf(F,dfb,dfw)
-
-            phisher = [SSb,SSw,dfb,dfw,MSb,MSw,F,F_critical,P_value]
-
-            phisher_analyse.append(phisher)
-        print(phisher_analyse)
+                phisher_analyse.append(phisher)
+            phisher_analyse_arr.append(phisher_analyse)
+        
 
 
 
@@ -346,21 +352,28 @@ class Function1(Tk):
 
 
         names = ["SSb","SSw","dfb","dfw","MSb","MSw","F","F-crit","p"]
-        for i in range(len(raw_data)):
-            
-            lbl = ttk.Label(frame_table, text=raw_data[i][0].get(), justify=RIGHT)
-            lbl.grid(row=i+1, column=0)
+        counter = 0
+        for raw_index in range(len(raw_indexes)):
+            lbl = ttk.Label(frame_table, text=raw_indexes[raw_index][0].get(), justify=RIGHT)
+            lbl.grid(row=0+counter, column=0,rowspan=2)
+            for i in range(len(raw_data)):
+                
+                lbl = ttk.Label(frame_table, text=raw_data[i][0].get(), justify=RIGHT)
+                lbl.grid(row=i+2+counter, column=0)
 
-        for i in range(len(names)):
-            
-            lbl = ttk.Label(frame_table, text=names[i], justify=RIGHT)
-            lbl.grid(row=0, column=i+1)
-        for i in range(len(phisher_analyse)):
+            for i in range(len(names)):
+                
+                lbl = ttk.Label(frame_table, text=names[i], justify=RIGHT)
+                lbl.grid(row=0+counter+1, column=i+1)
+            phisher_analyse = phisher_analyse_arr[raw_index]
+            for i in range(len(phisher_analyse)):
 
-            for j in range(len(phisher_analyse[i])):
-                entry = ttk.Entry(frame_table, justify=RIGHT)
-                entry.insert(0, str(phisher_analyse[i][j]))
-                entry.grid(row=i+1, column=j+1)
+                for j in range(len(phisher_analyse[i])):
+                    entry = ttk.Entry(frame_table, justify=RIGHT)
+                    entry.insert(0, str(phisher_analyse[i][j]))
+                    entry.grid(row=i+2+counter, column=j+1)
+            counter+=len(raw_data)+2
+            
 
 
 
