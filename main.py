@@ -3,13 +3,15 @@ from symtable import Function
 from tkinter import *
 import tkinter as tk
 from tkinter import ttk
+import matplotlib.figure
 import pandas as pd
-import matplotlib as plt
+import matplotlib.pyplot as plt
 from tkinter import filedialog
 import numpy as np
 import math
 import scipy.stats as sc
-
+import matplotlib
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class Create:
     def __init__(self):
@@ -235,47 +237,69 @@ class Function1(Tk):
         self.geometry("1000x1000")
 
         self.canv = tk.Canvas(self)
-        self.canv.pack(side="left", fill="both", expand=True)
+        self.canv.pack(side="top", fill="both", expand=True)
 
         frame_table = Frame(self.canv)
         frame_table.bind("<Configure>", lambda e: self.canv.configure(scrollregion=self.canv.bbox("all")))
         self.canv.create_window((0,0),window=frame_table,anchor="nw")
 
+        data1 = [0]*(len(raw_data[0])-1)
+        ln = len(raw_data[0])
+        for i in range(len(raw_data)):
+                
+            for  j in range(1,len(raw_data[i])):
+                data1[j-1] += (math.pow(float(raw_data[i][j].get()),2))/ln
+
+        for i in range(len(data1)):
+            data1[i] = -10 *(math.log10(data1[i]))
+
 
         phisher_analyse_arr = []
+        unique_list = []
+        y_dots = []
         for raw_indexes_col in raw_indexes:
 
             list1 = []
             for i in raw_indexes_col[1:]:
                 list1.append(i.get())
             
-            unique = list(set(list1))
+            # unique = list(set(list1))
+            unique = []
+            for i in list1:
+                if i in unique:
+                    continue
+                else:
+                    unique.append(i)
+            unique_list.append(unique)
+            
 
-            analyse_data = []
-            for cur_col in raw_data:
-                col_data = []
-                for un in unique:
+            
 
-                    col_data_col = []
+            # analyse_data = []
+            # for cur_col in raw_data:
+            col_data = []
+            for un in unique:
 
-                    for i in range(1,len(cur_col)):
+                col_data_col = []
+
+                for i in range(1,len(raw_data[0])):
                         # if float(cur_col[i].get()) == float(0):
                         #     continue
                         
 
-                        if raw_indexes_col[i].get() == un:
-                            col_data_col.append(cur_col[i].get())
+                    if raw_indexes_col[i].get() == un:
+                        col_data_col.append(data1[i-1])
                         
-                    col_data.append(col_data_col)
-                analyse_data.append(col_data)
+                col_data.append(col_data_col)
+                # analyse_data.append(col_data)
 
-            print(analyse_data)
-
+            # print(analyse_data)
+            
             phisher_analyse = []
-            for data in analyse_data:
+            for data in [col_data]:
                 
 
-                alpha = 0.05
+                alpha = 0.06
                 summ_mean = 0
                 SSb = 0
                 SSw = 0
@@ -310,19 +334,20 @@ class Function1(Tk):
                 dfb = k-1
                 dfw = n-k
                 dft = n - 1
-
+                dispers = 0
                 x_col_mean_list = []
                 for i in range(len(data)):
                     x_col_mean = 0
                     for j in range(len(data[i])):
+                        
                         x_col_mean += (float(data[i][j])/n_col_list[i])
                     SSb += math.pow((x_col_mean - summ_mean),2)*n_col_list[i]
                     x_col_mean_list.append(x_col_mean)
-                
+                y_dots.append(x_col_mean_list)
                 for i in range(len(data)):
 
                     for j in range(len(data[i])):
-
+                        
                         SSw+=math.pow((float(data[i][j]) - x_col_mean_list[i]),2)
                         SSt+=math.pow((float(data[i][j]) - summ_mean),2)
 
@@ -337,8 +362,56 @@ class Function1(Tk):
 
                 phisher = [SSb,SSw,dfb,dfw,MSb,MSw,F,F_critical,P_value]
 
-                phisher_analyse.append(phisher)
-            phisher_analyse_arr.append(phisher_analyse)
+                # phisher_analyse.append(phisher)
+            phisher_analyse_arr.append(phisher)
+        
+
+        std = np.std(data1,ddof=1)
+        mean = np.mean(data1)
+
+        fig = matplotlib.figure.Figure(figsize=(12, 8), dpi=100)
+        
+        ax = fig.add_subplot(111)
+        
+
+        
+
+
+        ax.axhline(y=mean + 2*std, color='gray', linestyle='--', linewidth=1)
+        ax.axhline(y=mean - 2*std, color='gray', linestyle='--', linewidth=1)
+        ax.axhline(y=mean, color='red', linewidth=1)
+        counter = 3.5
+        stri=""
+        for i in range(len(unique_list)):
+            if i == len(unique_list)-1:
+                stri+=raw_indexes[i][0].get()
+            else:
+                ax.axvline(0+counter)
+                stri+=raw_indexes[i][0].get()+",    "
+            
+            counter+=4
+
+        counter = 0
+        x_positions = np.arange(len(np.reshape(np.array(unique_list),(-1))))
+        for i in range(len(unique_list)):
+            x_cur = x_positions[0+counter:4+counter]
+            ax.plot(x_cur,y_dots[i],marker = "o")
+            counter+=4
+
+        mn = np.min(x_col_mean_list)
+        mx = np.max(x_col_mean_list)
+
+        
+
+
+        ax.set_xticks(x_positions, np.reshape(np.array(unique_list),(-1)), ha='right')
+        ax.set_yticks(np.arange(np.floor(mn)-3,np.ceil(mx)+3,0.5))
+        ax.set_ylabel('ЭТА = -10log10(sum((yi^2)/n)')
+        ax.set_title(stri)
+        ax.grid(True, linestyle=':', alpha=0.7)
+        # ax.legend()
+
+        
         
 
 
@@ -353,28 +426,31 @@ class Function1(Tk):
 
         names = ["SSb","SSw","dfb","dfw","MSb","MSw","F","F-crit","p"]
         counter = 0
-        for raw_index in range(len(raw_indexes)):
-            lbl = ttk.Label(frame_table, text=raw_indexes[raw_index][0].get(), justify=RIGHT)
-            lbl.grid(row=0+counter, column=0,rowspan=2)
-            for i in range(len(raw_data)):
+        # for raw_index in range(len(raw_indexes)):
+        # lbl = ttk.Label(frame_table, text=raw_indexes[raw_index][0].get(), justify=RIGHT)
+        # lbl.grid(row=0+counter, column=0,rowspan=2)
+        for i in range(len(raw_indexes)):
                 
-                lbl = ttk.Label(frame_table, text=raw_data[i][0].get(), justify=RIGHT)
-                lbl.grid(row=i+2+counter, column=0)
+            lbl = ttk.Label(frame_table, text=raw_indexes[i][0].get(), justify=RIGHT)
+            lbl.grid(row=i+1, column=0)
 
-            for i in range(len(names)):
+        for i in range(len(names)):
                 
-                lbl = ttk.Label(frame_table, text=names[i], justify=RIGHT)
-                lbl.grid(row=0+counter+1, column=i+1)
-            phisher_analyse = phisher_analyse_arr[raw_index]
-            for i in range(len(phisher_analyse)):
+            lbl = ttk.Label(frame_table, text=names[i], justify=RIGHT)
+            lbl.grid(row=0, column=i+1)
+        phisher_analyse = phisher_analyse_arr
+        for i in range(len(phisher_analyse)):
 
-                for j in range(len(phisher_analyse[i])):
-                    entry = ttk.Entry(frame_table, justify=RIGHT)
-                    entry.insert(0, str(phisher_analyse[i][j]))
-                    entry.grid(row=i+2+counter, column=j+1)
-            counter+=len(raw_data)+2
-            
-
+            for j in range(len(phisher_analyse[i])):
+                entry = ttk.Entry(frame_table, justify=RIGHT)
+                entry.insert(0, str(phisher_analyse[i][j]))
+                entry.grid(row=i+1, column=j+1)
+       
+        frame_img = Frame(master=self)
+        frame_img.pack(side="bottom")
+        canvas = FigureCanvasTkAgg(fig, master=frame_img)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
 
 
         self.canv.bind_all("<MouseWheel>", lambda e: self.canv.yview_scroll(int(-1*(e.delta/120)), "units"))
